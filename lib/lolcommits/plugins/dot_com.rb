@@ -2,17 +2,20 @@ require 'httmultiparty'
 
 module Lolcommits
   class DotCom < Plugin
+
     def initialize(runner)
       super
-
-      self.name    = 'dot_com'
-      self.default = false
       self.options.concat(['api_key', 'api_secret', 'repo_id'])
     end
 
     def run
+      if !is_configured?
+        puts "Missing #{self.class.name} config - configure with: lolcommits --config -p #{self.class.name}"
+        return
+      end
+
       t = Time.now.to_i.to_s
-      resp = HTTMultiParty.post('http://www.lolcommits.com/git_commits.json', 
+      resp = HTTMultiParty.post('http://www.lolcommits.com/git_commits.json',
         :body => {
           :git_commit => {
             :sha              => self.runner.sha,
@@ -28,5 +31,15 @@ module Lolcommits
       )
     end
 
+    def is_configured?
+      !configuration['enabled'].nil? &&
+        configuration['api_key'] &&
+        configuration['api_secret'] &&
+        configuration['repo_id']
+    end
+
+    def self.name
+      'dot_com'
+    end
   end
 end
